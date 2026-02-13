@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dev Editor Ultra V3</title>
+
+<style>
+body{
+    margin:0;
+    font-family:Arial;
+    background:#0f1720;
+    color:#00ff99;
+    display:flex;
+    height:100vh;
+    overflow:hidden;
+}
+
+.editor{
+    width:50%;
+    display:flex;
+    flex-direction:column;
+    background:#0b1118;
+    transition:0.3s;
+}
+
+.tabs{
+    display:flex;
+    background:#121b25;
+}
+
+.tabs button{
+    flex:1;
+    padding:12px;
+    background:#121b25;
+    border:none;
+    color:#aaa;
+    cursor:pointer;
+    font-weight:bold;
+}
+
+.tabs button.active{
+    background:#00c853;
+    color:black;
+}
+
+textarea{
+    flex:1;
+    background:#0b1118;
+    border:none;
+    color:#00ff99;
+    padding:10px;
+    font-family:monospace;
+    font-size:14px;
+    resize:none;
+    display:none;
+}
+
+textarea.active{
+    display:block;
+}
+
+.controls{
+    padding:8px;
+    background:#0f1720;
+}
+
+.controls button{
+    width:100%;
+    margin:4px 0;
+    padding:8px;
+    border:none;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+.run{background:#00c853;}
+.save{background:#1de9b6;}
+.load{background:#00bfa5;}
+.security{background:#00e676;}
+.auto{background:#ffc107;}
+.resize{background:#ffa000;}
+
+.preview{
+    width:50%;
+    background:white;
+    position:relative;
+    transition:0.3s;
+}
+
+iframe{
+    width:100%;
+    height:80%;
+    border:none;
+}
+
+.console{
+    height:20%;
+    background:#111;
+    color:#0f0;
+    font-size:12px;
+    overflow:auto;
+    padding:5px;
+}
+
+.report{
+    position:absolute;
+    bottom:0;
+    left:0;
+    right:0;
+    background:#000;
+    color:#fff;
+    padding:4px;
+    font-size:12px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="editor" id="editor">
+
+<div class="tabs">
+<button onclick="switchTab('html')" class="active">HTML</button>
+<button onclick="switchTab('css')">CSS</button>
+<button onclick="switchTab('js')">JavaScript</button>
+</div>
+
+<textarea id="html" class="active">
+<h1>Hello Ultra 👋</h1>
+<button onclick="test()">Click</button>
+</textarea>
+
+<textarea id="css">
+body { text-align:center; font-family:Arial; }
+h1 { color:red; }
+</textarea>
+
+<textarea id="js">
+function test(){
+    console.log("Button geklickt");
+}
+</textarea>
+
+<div class="controls">
+<button class="run" onclick="runCode()">▶ Code ausführen</button>
+<button class="auto" onclick="toggleAuto()">⚡ Auto Run EIN/AUS</button>
+<button class="save" onclick="saveProject()">💾 Projekt speichern</button>
+<button class="load" onclick="loadProject()">📂 Projekt laden</button>
+<button class="security" onclick="securityTest()">🛡 Sicherheits-Test</button>
+<button class="resize" onclick="resizeEditor()">⬜ Resize Editor</button>
+</div>
+
+</div>
+
+<div class="preview" id="preview">
+<iframe id="output" sandbox="allow-scripts"></iframe>
+<div class="console" id="console">Console ready...</div>
+<div class="report" id="report">Security Report erscheint hier...</div>
+</div>
+
+<script>
+
+let autoRun=false;
+let bigEditor=false;
+
+function switchTab(tab){
+document.querySelectorAll("textarea").forEach(t=>t.classList.remove("active"));
+document.querySelectorAll(".tabs button").forEach(b=>b.classList.remove("active"));
+document.getElementById(tab).classList.add("active");
+event.target.classList.add("active");
+}
+
+function runCode(){
+const html=document.getElementById("html").value;
+const css="<style>"+document.getElementById("css").value+"</style>";
+const js=`<script>
+console.log = function(msg){
+parent.document.getElementById('console').innerHTML += msg + "<br>";
+}
+try{
+${document.getElementById("js").value}
+}catch(e){
+parent.document.getElementById('console').innerHTML += "JS ERROR: "+e+"<br>";
+}
+<\/script>`;
+
+document.getElementById("console").innerHTML="Console cleared...<br>";
+document.getElementById("output").srcdoc=html+css+js;
+}
+
+function toggleAuto(){
+autoRun=!autoRun;
+document.getElementById("report").innerText=autoRun?"Auto Run aktiviert":"Auto Run deaktiviert";
+}
+
+document.querySelectorAll("textarea").forEach(t=>{
+t.addEventListener("input",()=>{
+if(autoRun) runCode();
+});
+});
+
+function saveProject(){
+localStorage.setItem("html",html.value);
+localStorage.setItem("css",css.value);
+localStorage.setItem("js",js.value);
+report.innerText="Projekt gespeichert ✔";
+}
+
+function loadProject(){
+html.value=localStorage.getItem("html")||"";
+css.value=localStorage.getItem("css")||"";
+js.value=localStorage.getItem("js")||"";
+report.innerText="Projekt geladen ✔";
+}
+
+function securityTest(){
+let warnings=[];
+let h=html.value;
+let j=js.value;
+
+if(h.includes("onclick")) warnings.push("Inline Event Handler gefunden");
+if(j.includes("eval(")) warnings.push("Eval Nutzung entdeckt");
+if(h.includes("<script>")) warnings.push("Script Tag im HTML");
+
+report.innerText=warnings.length?warnings.join(" | "):"✔ Keine kritischen Probleme erkannt";
+}
+
+function resizeEditor(){
+bigEditor=!bigEditor;
+editor.style.width=bigEditor?"70%":"50%";
+}
+
+</script>
+
+</body>
+</html>
